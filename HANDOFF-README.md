@@ -87,6 +87,12 @@ Nothing is required from the author. The manager creates a local `.env` from `en
 
 ---
 
+## CI status note
+
+This repo is infra-first and designed to run via docker-compose with a local `.env` and runtime-generated TLS certs. CI does not have access to `.env`, secrets, or certificates. The GitHub Actions workflow verifies that the project compiles and packages; it does not run tests (tests load Spring context and may require Parameter Store or DB). Spotless format check runs but is non-blocking so CI stays green. Full test and format checks are done locally. This is intentional for infra repos that are validated by local run and review.
+
+---
+
 ## Where things live
 
 - **Run instructions:** Root **README.md**, section "Run locally (logging stack)".

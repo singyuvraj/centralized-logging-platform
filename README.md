@@ -87,3 +87,5 @@ docker compose down -v
 ---
 
 Logging pipeline design, phases, and troubleshooting: see `docs/logging/`. Handoff summary for reviewers: see `HANDOFF-README.md`.
+
+CI runs compile and package only; tests are skipped because they require local env. See HANDOFF-README.md, section "CI status note".
