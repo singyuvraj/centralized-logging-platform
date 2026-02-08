@@ -1,0 +1,94 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Config Properties ###
+application-local.properties
+.mvn/
+
+### Local log files (Phase 1: LOG_PATH=./logs/application.log) ###
+logs/
+
+### Phase 2 TLS (dev self-signed; regenerate with tls/gen-certs.sh) ###
+tls/ca.key
+tls/logstash.key
+tls/nginx.key
+tls/kibana.key
+tls/elasticsearch.key
+tls/elasticsearch.crt
+tls/ca.crt
+tls/logstash.crt
+tls/nginx.crt
+tls/kibana.crt
+tls/*.csr
+tls/*.srl
+
+### Environment & secrets ###
+.env
+*.env
+env.local
+env.production
+env.dev
+
+### TLS / certificates (additional patterns) ###
+tls/*.key
+tls/*.crt
+tls/ca.*
+tls/elasticsearch.*
+tls/kibana.*
+tls/logstash.*
+tls/nginx.*
+*.pem
+*.jks
+*.p12
+
+### Runtime logs & data ###
+*.log
+filebeat-data/
+logstash-data/
+es-data/
+
+### Build & JVM artifacts ###
+*.class
+*.jar
+*.war
+
+### OS / editor ###
+.DS_Store
+Thumbs.db
+*.swp
+
+### Temporary or generated ###
+*.pid
+*.tmp
+*.bak

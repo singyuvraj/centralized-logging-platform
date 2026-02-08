@@ -1,0 +1,138 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - stage
+          - qa
+          - prod
+        default: dev
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run Spotless check
+        run: mvn spotless:check
+
+      - name: Run tests
+        run: mvn clean test -B
+        env:
+          SPRING_PROFILES_ACTIVE: test
+
+
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image and push to GHCR
+        run: |
+          echo "${{ secrets.DOCKER_GHCR_TOKEN }}" | docker login ghcr.io -u tapasrwth --password-stdin
+          docker build -t ghcr.io/valantech/suljhaoo-backend-service:latest .
+          docker push ghcr.io/valantech/suljhaoo-backend-service:latest
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: build-docker
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    environment:
+      name: ${{ github.event.inputs.environment || 'dev' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Copy deployment script
+        run: |
+          mkdir -p /tmp/deploy
+          cp scripts/deploy.sh /tmp/deploy/deploy.sh
+          chmod +x /tmp/deploy/deploy.sh
+
+      - name: Determine deployment environment
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            DEPLOY_ENV="${{ github.event.inputs.environment }}"
+          else
+            DEPLOY_ENV="dev"
+          fi
+          echo "DEPLOY_ENV=$DEPLOY_ENV" >> $GITHUB_OUTPUT
+          echo "Deploying to environment: $DEPLOY_ENV"
+
+      - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ec2-user
+          EC2_SSH_KEY: ${{ secrets.EC2_KEY }}
+          ENVIRONMENT: ${{ 'dev' }}
+          DOCKER_GHCR_TOKEN: ${{ secrets.DOCKER_GHCR_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ap-south-1
+          DOCKER_IMAGE: ghcr.io/valantech/suljhaoo-backend-service
+        run: |
+          echo "$EC2_SSH_KEY" > /tmp/ec2_key.pem
+          chmod 600 /tmp/ec2_key.pem
+          
+          # Copy deployment script to EC2
+          scp -i /tmp/ec2_key.pem -o StrictHostKeyChecking=no /tmp/deploy/deploy.sh $EC2_USER@$EC2_HOST:/tmp/deploy.sh
+          
+          # Execute deployment on EC2
+          ssh -i /tmp/ec2_key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST \
+            "ENVIRONMENT=$ENVIRONMENT \
+             IMAGE_TAG=latest \
+             DOCKER_IMAGE=$DOCKER_IMAGE \
+             DOCKER_GHCR_TOKEN=$DOCKER_GHCR_TOKEN \
+             AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+             AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+             AWS_REGION=$AWS_REGION \
+             bash /tmp/deploy.sh $ENVIRONMENT latest"
+          
+          rm -f /tmp/ec2_key.pem
+

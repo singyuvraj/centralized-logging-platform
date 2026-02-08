@@ -1,0 +1,301 @@
+{
+  "endpoints": [
+    {
+      "path": "/auth/**",
+      "method": "*",
+      "roles": [],
+      "description": "Public authentication endpoints"
+    },
+    {
+      "path": "/auth/logout",
+      "method": "POST",
+      "roles": [],
+      "description": "User logout endpoint"
+    },
+    {
+      "path": "/signup/**",
+      "method": "*",
+      "roles": [],
+      "description": "Public signup endpoints"
+    },
+    {
+      "path": "/health",
+      "method": "GET",
+      "roles": [],
+      "description": "Health check endpoint"
+    },
+    {
+      "path": "/health/pool",
+      "method": "GET",
+      "roles": [],
+      "description": "Connection pool statistics endpoint"
+    },
+    {
+      "path": "/actuator/health",
+      "method": "GET",
+      "roles": [],
+      "description": "Actuator health endpoint (public)"
+    },
+    {
+      "path": "/actuator/prometheus",
+      "method": "GET",
+      "roles": [],
+      "description": "Actuator Prometheus metrics endpoint (public)"
+    },
+    {
+      "path": "/actuator/metrics",
+      "method": "GET",
+      "roles": ["ADMIN"],
+      "description": "Actuator metrics endpoint (admin only)"
+    },
+    {
+      "path": "/actuator/metrics/**",
+      "method": "GET",
+      "roles": ["ADMIN"],
+      "description": "Actuator specific metric endpoints (admin only)"
+    },
+    {
+      "path": "/actuator/**",
+      "method": "GET",
+      "roles": ["ADMIN"],
+      "description": "Actuator other endpoints (admin only)"
+    },
+    {
+      "path": "/stores",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get all stores"
+    },
+    {
+      "path": "/stores",
+      "method": "POST",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Create a new store"
+    },
+    {
+      "path": "/stores/{id}",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get store by ID"
+    },
+    {
+      "path": "/stores/{id}",
+      "method": "PUT",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Update a store"
+    },
+    {
+      "path": "/stores/{id}",
+      "method": "DELETE",
+      "roles": ["ADMIN"],
+      "description": "Delete a store (admin only)"
+    },
+    {
+      "path": "/profile",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get user profile"
+    },
+    {
+      "path": "/profile",
+      "method": "PUT",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Update user profile"
+    },
+    {
+      "path": "/sales/user/{userId}/{storeId}",
+      "method": "POST",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Create a new sale record"
+    },
+    {
+      "path": "/sales/user/{userId}/{storeId}",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get all sales for a user and store"
+    },
+    {
+      "path": "/sales/user/{userId}/{storeId}/cash-sales",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get all cash sales (cash, upi, card) for a user and store"
+    },
+    {
+      "path": "/sales/user/{userId}/{storeId}/{saleId}",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get a single sale by ID"
+    },
+    {
+      "path": "/sales/user/{userId}/{storeId}/{saleId}",
+      "method": "PUT",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Update a sale record"
+    },
+    {
+      "path": "/sales/user/{userId}/{storeId}/{saleId}",
+      "method": "DELETE",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Delete a sale record"
+    },
+    {
+      "path": "/stock/user/{userId}/{storeId}",
+      "method": "POST",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Create a new stock item"
+    },
+    {
+      "path": "/stock/user/{userId}/{storeId}",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get all stock items for a user and store"
+    },
+    {
+      "path": "/stock/user/{userId}/{storeId}/low-stock",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get low stock items (quantity <= minLevel) for a user and store"
+    },
+    {
+      "path": "/stock/user/{userId}/{storeId}/{stockId}",
+      "method": "PUT",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Update a stock item"
+    },
+    {
+      "path": "/stock/user/{userId}/{storeId}/{stockId}",
+      "method": "DELETE",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Delete a stock item"
+    },
+    {
+      "path": "/expenses/user/{userId}/{storeId}",
+      "method": "POST",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Create a new expense record"
+    },
+    {
+      "path": "/expenses/user/{userId}/{storeId}",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get all expenses for a user and store"
+    },
+    {
+      "path": "/expenses/user/{userId}/{storeId}/{expenseId}",
+      "method": "PUT",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Update an expense record"
+    },
+    {
+      "path": "/expenses/user/{userId}/{storeId}/{expenseId}",
+      "method": "DELETE",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Delete an expense record"
+    },
+    {
+      "path": "/stock/user/{userId}/{storeId}/bulk-upload",
+      "method": "POST",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Bulk upload stock items from Excel file"
+    },
+    {
+      "path": "/suppliers/user/{userId}/{storeId}",
+      "method": "POST",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Create a new supplier record"
+    },
+    {
+      "path": "/suppliers/user/{userId}/{storeId}",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get all suppliers for a user and store"
+    },
+    {
+      "path": "/suppliers/user/{userId}/{storeId}/{id}",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get a single supplier by ID"
+    },
+    {
+      "path": "/suppliers/user/{userId}/{storeId}/{id}",
+      "method": "PUT",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Update a supplier record"
+    },
+    {
+      "path": "/suppliers/user/{userId}/{storeId}/{id}",
+      "method": "DELETE",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Delete a supplier record"
+    },
+    {
+      "path": "/suppliers/user/{userId}/{storeId}/{supplierId}/items",
+      "method": "POST",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Create a new supplier item"
+    },
+    {
+      "path": "/suppliers/user/{userId}/{storeId}/{supplierId}/items",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get all supplier items for a supplier"
+    },
+    {
+      "path": "/suppliers/user/{userId}/{storeId}/{supplierId}/items/{itemId}",
+      "method": "PUT",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Update a supplier item"
+    },
+    {
+      "path": "/suppliers/user/{userId}/{storeId}/{supplierId}/items/{itemId}",
+      "method": "DELETE",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Delete a supplier item"
+    },
+    {
+      "path": "/orders",
+      "method": "POST",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Create a new order"
+    },
+    {
+      "path": "/orders/user/{userId}",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get all orders for a user"
+    },
+    {
+      "path": "/orders/supplier/{supplierId}",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get all orders for a specific supplier"
+    },
+    {
+      "path": "/orders/user/{userId}/{id}",
+      "method": "GET",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Get a single order by ID"
+    },
+    {
+      "path": "/orders/user/{userId}/{id}",
+      "method": "PUT",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Update an order"
+    },
+    {
+      "path": "/orders/user/{userId}/{id}/status",
+      "method": "PATCH",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Update order status"
+    },
+    {
+      "path": "/orders/user/{userId}/{id}",
+      "method": "DELETE",
+      "roles": ["SHOPOWNER", "ADMIN"],
+      "description": "Delete an order"
+    }
+  ],
+  "defaultRole": "AUTHENTICATED",
+  "strictValidation": true
+}
+

@@ -1,0 +1,25 @@
+# Phase 2: Filebeat sidecar for application logs.
+# Reads NDJSON from shared volume at canonical path /apps/logs/*.log (HARD CONTRACT).
+# Identity fields (service.name, service.environment, env) come from the app only; Filebeat does not add them.
+
+filebeat.inputs:
+  - type: log
+    allow_deprecated_use: true
+    paths:
+      - /apps/logs/*.log
+    json.keys_under_root: true
+    json.overwrite_keys: true
+    json.add_error_key: true
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+# Registry must be persisted so Filebeat remembers read offsets across restarts.
+path.data: /usr/share/filebeat/data
+path.logs: /usr/share/filebeat/logs
+
+output.logstash:
+  hosts: ["logstash:5044"]
+  ssl.enabled: true
+  ssl.certificate_authorities: ["/usr/share/filebeat/certs/ca.crt"]

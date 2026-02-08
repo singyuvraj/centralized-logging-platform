@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <EcsLayout
+          serviceName="${spring:spring.application.name}"
+          serviceEnvironment="${env:ENV:-dev}">
+        <KeyValuePair key="trace.id" value="$${ctx:traceId}"/>
+        <KeyValuePair key="env" value="$${env:ENV:-dev}"/>
+      </EcsLayout>
+    </Console>
+    <RollingFile
+        name="File"
+        fileName="${sys:LOG_PATH:-/apps/logs/application.log}"
+        filePattern="${sys:LOG_PATH:-/apps/logs/application.log}.%i">
+      <EcsLayout
+          serviceName="${spring:spring.application.name}"
+          serviceEnvironment="${env:ENV:-dev}">
+        <KeyValuePair key="trace.id" value="$${ctx:traceId}"/>
+        <KeyValuePair key="env" value="$${env:ENV:-dev}"/>
+      </EcsLayout>
+      <Policies>
+        <SizeBasedTriggeringPolicy size="50 MB"/>
+      </Policies>
+      <DefaultRolloverStrategy max="5"/>
+    </RollingFile>
+  </Appenders>
+  <Loggers>
+    <Logger name="com.suljhaoo.backend.config.ParameterStoreConfig" level="INFO"/>
+    <Root level="INFO">
+      <AppenderRef ref="Console"/>
+      <AppenderRef ref="File"/>
+    </Root>
+  </Loggers>
+</Configuration>

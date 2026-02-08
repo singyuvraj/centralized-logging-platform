@@ -1,0 +1,148 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: suljhaoo-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+      - AWS_PARAMETERSTORE_ENVIRONMENT=${AWS_PARAMETERSTORE_ENVIRONMENT:-dev}
+      - AWS_REGION=${AWS_REGION:-ap-south-1}
+      # Uncomment and set if using IAM user credentials
+      # - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      # - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    volumes:
+      # Phase 2: shared with Filebeat sidecar for log shipping (HARD CONTRACT: /apps/logs)
+      - backend-logs:/apps/logs
+      # Optional: Mount AWS credentials if using local credentials file
+      # - ~/.aws:/root/.aws:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+    networks:
+      - suljhaoo-network
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.15.0
+    container_name: suljhaoo-filebeat
+    user: root
+    volumes:
+      - backend-logs:/apps/logs:ro
+      - filebeat-data:/usr/share/filebeat/data
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./tls:/usr/share/filebeat/certs:ro
+    command: filebeat -e -strict.perms=false
+    depends_on:
+      - backend
+      - logstash
+    restart: unless-stopped
+    networks:
+      - suljhaoo-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: suljhaoo-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=/usr/share/elasticsearch/config/certs/elasticsearch.key
+      - xpack.security.http.ssl.certificate=/usr/share/elasticsearch/config/certs/elasticsearch.crt
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?Set ELASTIC_PASSWORD in .env}
+    restart: unless-stopped
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+      - ./tls/elasticsearch.key:/usr/share/elasticsearch/config/certs/elasticsearch.key:ro
+      - ./tls/elasticsearch.crt:/usr/share/elasticsearch/config/certs/elasticsearch.crt:ro
+    networks:
+      - suljhaoo-network
+
+  es-setup:
+    image: curlimages/curl:8.5.0
+    container_name: suljhaoo-es-setup
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:?Set ELASTIC_PASSWORD in .env}
+      - LOGSTASH_WRITER_PASSWORD=${LOGSTASH_WRITER_PASSWORD:?Set LOGSTASH_WRITER_PASSWORD in .env}
+      - KIBANA_SYSTEM_PASSWORD=${KIBANA_SYSTEM_PASSWORD:?Set KIBANA_SYSTEM_PASSWORD in .env}
+      - KIBANA_USER_PASSWORD=${KIBANA_USER_PASSWORD:?Set KIBANA_USER_PASSWORD in .env}
+    volumes:
+      - ./scripts/elasticsearch-init-security.sh:/scripts/elasticsearch-init-security.sh:ro
+      - ./tls/ca.crt:/scripts/ca.crt:ro
+    entrypoint: ["/bin/sh", "/scripts/elasticsearch-init-security.sh"]
+    depends_on:
+      - elasticsearch
+    networks:
+      - suljhaoo-network
+    restart: "no"
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.15.0
+    container_name: suljhaoo-logstash
+    ports:
+      - "5044:5044"
+    restart: unless-stopped
+    volumes:
+      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./tls:/usr/share/logstash/certs:ro
+      - logstash-data:/usr/share/logstash/data
+    environment:
+      - "LS_JAVA_OPTS=-Xms256m -Xmx256m"
+      - ELASTICSEARCH_HOST=${ELASTICSEARCH_HOST:-elasticsearch}
+      - LOGSTASH_WRITER_PASSWORD=${LOGSTASH_WRITER_PASSWORD:?Set LOGSTASH_WRITER_PASSWORD in .env}
+    depends_on:
+      es-setup:
+        condition: service_completed_successfully
+    networks:
+      - suljhaoo-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.0
+    container_name: suljhaoo-kibana
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=5601
+      # Kibana → Elasticsearch over HTTPS only (no HTTP)
+      - ELASTICSEARCH_HOSTS=https://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_SYSTEM_PASSWORD:?Set KIBANA_SYSTEM_PASSWORD in .env}
+      - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=/usr/share/kibana/config/certs/ca.crt
+    restart: unless-stopped
+    volumes:
+      - ./tls/ca.crt:/usr/share/kibana/config/certs/ca.crt:ro
+    depends_on:
+      - elasticsearch
+      - es-setup
+    networks:
+      - suljhaoo-network
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: suljhaoo-nginx
+    ports:
+      - "443:443"
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./tls/nginx.crt:/etc/nginx/certs/nginx.crt:ro
+      - ./tls/nginx.key:/etc/nginx/certs/nginx.key:ro
+    depends_on:
+      - kibana
+    networks:
+      - suljhaoo-network
+
+volumes:
+  backend-logs:
+  filebeat-data:
+  es-data:
+  logstash-data:
+
+networks:
+  suljhaoo-network:
+    driver: bridge
+
